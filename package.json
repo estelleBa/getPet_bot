@@ -1,0 +1,23 @@
+{
+  "name": "getpet_bot",
+  "version": "1.0.0",
+  "description": "discord bot",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akakhaleesi/getPet_bot.git"
+  },
+  "author": "akakhaleesi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/akakhaleesi/getPet_bot/issues"
+  },
+  "homepage": "https://github.com/akakhaleesi/getPet_bot#readme",
+  "dependencies": {
+    "discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
+    "winston": "^3.2.1"
+  }
+}
