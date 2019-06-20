@@ -17,7 +17,9 @@
   },
   "homepage": "https://github.com/akakhaleesi/getPet_bot#readme",
   "dependencies": {
+    "dialogflow": "^0.10.1",
     "discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
+    "uuid": "^3.3.2",
     "winston": "^3.2.1"
   }
 }
