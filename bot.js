@@ -1,43 +1,24 @@
 const Discord = require('discord.io');
 const logger = require('winston');
 const auth = require('./auth.json');
+const apiai = require('apiai');
+const config = require('./config.js');
+const app = apiai(config.Dialogflow);
 
 const dialogflow = require('dialogflow');
 const uuid = require('uuid');
 
-async function runSample(projectId = 'my-project-1525857606051') {
-  // A unique identifier for the given session
-  const sessionId = uuid.v4();
+// Initialize Discord Bot
+const bot = new Discord.Client({
+   token: auth.token,
+   autorun: true
+});
 
-  // Create a new session
-  const sessionClient = new dialogflow.SessionsClient();
-  const sessionPath = sessionClient.sessionPath(projectId, sessionId);
-
-  // The text query request.
-  const request = {
-    session: sessionPath,
-    queryInput: {
-      text: {
-        // The query to send to the dialogflow agent
-        text: 'hello',
-        // The language used by the client (en-US)
-        languageCode: 'en-US',
-      },
-    },
-  };
-
-  // Send request and log result
-  const responses = await sessionClient.detectIntent(request);
-  console.log('Detected intent');
-  const result = responses[0].queryResult;
-  console.log(`  Query: ${result.queryText}`);
-  console.log(`  Response: ${result.fulfillmentText}`);
-  if (result.intent) {
-    console.log(`  Intent: ${result.intent.displayName}`);
-  } else {
-    console.log(`  No intent matched.`);
-  }
-}
+bot.on('ready', function (evt) {
+    logger.info('Connected');
+    logger.info('Logged in as: ');
+    logger.info(bot.username + ' - (' + bot.id + ')');
+});
 
 // Configure logger settings
 logger.remove(logger.transports.Console);
@@ -45,16 +26,7 @@ logger.add(new logger.transports.Console, {
     colorize: true
 });
 logger.level = 'debug';
-// Initialize Discord Bot
-const bot = new Discord.Client({
-   token: auth.token,
-   autorun: true
-});
-bot.on('ready', function (evt) {
-    logger.info('Connected');
-    logger.info('Logged in as: ');
-    logger.info(bot.username + ' - (' + bot.id + ')');
-});
+
 
 let asleep = true;
 let state = 'undef';
@@ -129,3 +101,37 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 			 });
 		 }
 });
+
+// async function runSample(projectId = 'my-project-1525857606051') {
+	//   // A unique identifier for the given session
+	//   const sessionId = uuid.v4();
+	//
+	//   // Create a new session
+	//   const sessionClient = new dialogflow.SessionsClient();
+	//   const sessionPath = sessionClient.sessionPath(projectId, sessionId);
+	//
+	//   // The text query request.
+	//   const request = {
+		//     session: sessionPath,
+		//     queryInput: {
+			//       text: {
+				//         // The query to send to the dialogflow agent
+				//         text: 'hello',
+				//         // The language used by the client (en-US)
+				//         languageCode: 'en-US',
+				//       },
+				//     },
+				//   };
+				//
+				//   // Send request and log result
+				//   const responses = await sessionClient.detectIntent(request);
+				//   console.log('Detected intent');
+				//   const result = responses[0].queryResult;
+				//   console.log(`  Query: ${result.queryText}`);
+				//   console.log(`  Response: ${result.fulfillmentText}`);
+				//   if (result.intent) {
+					//     console.log(`  Intent: ${result.intent.displayName}`);
+					//   } else {
+						//     console.log(`  No intent matched.`);
+						//   }
+						// }
