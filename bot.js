@@ -50,6 +50,29 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 						}
 					});
 				}
+				else if(res.data.result.fulfillment.speech=='cat'){
+					let catStatus = [200,202,206,300,302,307,400,401,402,403,404,406,408,415,418,420,425,500,502,599];
+					function shuffle(a) {
+					    var j, x, i;
+					    for(i=0; i < catStatus.length; i++) {
+					        j = Math.floor(Math.random() * (i));
+					        x = a[i];
+					        a[i] = a[j];
+					        a[j] = x;
+					    }
+					    return a;
+					}
+					catStatus = shuffle(catStatus);
+					try {
+						bot.sendMessage({
+								to: channelID,
+								message: 'https://http.cat/'+catStatus[0]
+						});
+					}
+					catch(error){
+						console.log(error)
+					}
+				}
 				else {
 					//bot.channel.startTyping();
 					bot.sendMessage({
