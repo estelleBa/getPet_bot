@@ -33,12 +33,31 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 			try {
 				console.log(res.data.result.fulfillment.speech)
 				console.log(bot.channels[channelID])
-				//bot.channel.startTyping();
-				bot.sendMessage({
-						to: channelID,
-						message: res.data.result.fulfillment.speech
-				});
-				//bot.stopTyping();
+
+				if(res.data.result.fulfillment.speech=='dog'){
+					// GET DOG FROM API
+					axios.get('https://dog.ceo/api/breeds/image/random',
+					{ headers: { 'Content-Type' : 'application/json' },
+					}).then(function(res){
+						try {
+							bot.sendMessage({
+									to: channelID,
+									message: res.data.message
+							});
+						}
+						catch(error){
+							console.log(error)
+						}
+					});
+				}
+				else {
+					//bot.channel.startTyping();
+					bot.sendMessage({
+							to: channelID,
+							message: res.data.result.fulfillment.speech
+					});
+					//bot.stopTyping();
+				}
 			}
 			catch(error){
 				console.log(error)
