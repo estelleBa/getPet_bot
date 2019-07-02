@@ -4,7 +4,6 @@ const auth = require('./auth.json');
 const config = require('./config.js');
 
 const axios = require('axios');
-//const bodyParser = require('body-parser');
 
 // Initialize Discord Bot
 const bot = new Discord.Client({
@@ -18,73 +17,142 @@ bot.on('ready', function (evt) {
 	logger.info(bot.username + ' - (' + bot.id + ')');
 });
 
-bot.on('message', function (user, userID, channelID, message, evt) {
-	//console.log(bot)
-	if(user !== 'getPet'){
-		axios.post('https://api.dialogflow.com/v1/query?v=20150910',
-		{  contexts: ["shop"],
-			 lang: "fr",
-			 query: message + ' ' + user,
-			 sessionId: "f04e1bf8-18aa-4ab7-8832-58059591101e",
-			 timezone: "America/New_York"
-		},
-		{ headers: { 'Content-Type' : 'application/json', Authorization: "Bearer " + config.Dialogflow },
-		}).then(function(res){
-			try {
-				console.log(res.data.result.fulfillment.speech)
-				console.log(bot.channels[channelID])
+let talk = "off";
+let askAdopt = false;
+let validAdopt = false;
+let botSay = '';
+let embed = null;
 
-				if(res.data.result.fulfillment.speech=='dog'){
-					// GET DOG FROM API
+bot.on('message', function (user, userID, channelID, message, evt) {
+	if(user !== 'getPet'){
+		// turn on bot
+		if(message=='pet talk' && talk=="off"){
+			talk = "on";
+			botSend(bot, channelID, dialogFlow('start : ' + user));
+		}
+		// turn off bot
+		else if(message=='pet talk' && talk=="on"){
+			talk = "off";
+			botSend(bot, channelID, dialogFlow('exit : ' + user));
+		}
+		// bot on
+		else if(talk=="on"){
+			// askAdopt == true
+			if(askAdopt) {
+				if(message=="chat"){
+					// get cat
+					validAdopt = true;
+					askAdopt = false;
+					let catStatus = randomStatus();
+					setEmbed();
+					botSend(bot, channelID, 'https://http.cat/'+catStatus);
+				}
+				else if(message=="chien"){
+					// get dog
+					validAdopt = true;
+					askAdopt = false;
 					axios.get('https://dog.ceo/api/breeds/image/random',
 					{ headers: { 'Content-Type' : 'application/json' },
 					}).then(function(res){
 						try {
-							bot.sendMessage({
-									to: channelID,
-									message: res.data.message
-							});
+							setEmbed();
+							botSend(bot, channelID, res.data.message);
 						}
-						catch(error){
-							console.log(error)
-						}
+						catch(error){ botSend(bot, channelID, error); }
 					});
 				}
-				else if(res.data.result.fulfillment.speech=='cat'){
-					let catStatus = [200,202,206,300,302,307,400,401,402,403,404,406,408,415,418,420,425,500,502,599];
-					function shuffle(a) {
-					    var j, x, i;
-					    for(i=0; i < catStatus.length; i++) {
-					        j = Math.floor(Math.random() * (i));
-					        x = a[i];
-					        a[i] = a[j];
-					        a[j] = x;
-					    }
-					    return a;
-					}
-					catStatus = shuffle(catStatus);
-					try {
-						bot.sendMessage({
-								to: channelID,
-								message: 'https://http.cat/'+catStatus[0]
-						});
-					}
-					catch(error){
-						console.log(error)
-					}
-				}
-				else {
-					//bot.channel.startTyping();
-					bot.sendMessage({
-							to: channelID,
-							message: res.data.result.fulfillment.speech
-					});
-					//bot.stopTyping();
-				}
+				else botSend(bot, channelID, dialogFlow("askAdopt : undefined"));
 			}
-			catch(error){
-				console.log(error)
+			// validAdopt == true
+			else if(validAdopt) {
+				if(message=="oui"){
+					validAdopt = false;
+					botSend(bot, channelID, dialogFlow("validAdopt : true"));
+				}
+				else if(message=="non"){
+					validAdopt = false;
+					botSend(bot, channelID, dialogFlow("validAdopt : false"));
+				}
+				else botSend(bot, channelID, dialogFlow("validAdopt : undefined"));
 			}
-		});
+			else botSend(bot, channelID, dialogFlow(message));
+		}
 	}
 });
+
+function dialogFlow(message){
+	axios.post('https://api.dialogflow.com/v1/query?v=20150910',
+	{  contexts: [],
+		 lang: "fr",
+		 query: message,
+		 sessionId: "f04e1bf8-18aa-4ab7-8832-58059591101e",
+		 timezone: "America/New_York"
+	},
+	{ headers: { 'Content-Type' : 'application/json', Authorization: "Bearer " + config.Dialogflow },
+	}).then(function(res){
+		try {
+			let data = res.data.result.fulfillment.speech.split(':');
+			if(data[0]=="askAdopt"){
+				askAdopt = true;
+			}
+			else {
+
+			}
+			return data[1];
+		}
+		catch(error){ return error }
+	});
+}
+
+function botSend(bot, channelID, message){
+	bot.sendMessage({
+		to: channelID,
+		message: message,
+		embed: { embed },
+		typing: true
+	});
+	return;
+}
+
+function randomStatus(){
+	let catStatus = [200,202,206,300,302,307,400,401,402,403,404,406,408,415,418,420,425,500,502,599];
+	function shuffle(a) {
+			var j, x, i;
+			for(i=0; i < catStatus.length; i++) {
+					j = Math.floor(Math.random() * (i));
+					x = a[i];
+					a[i] = a[j];
+					a[j] = x;
+			}
+			return a;
+	}
+	catStatus = shuffle(catStatus);
+	return catStatus[0];
+}
+
+function setEmbed(){
+	embed = {
+		color: 6826080,
+		footer: {
+			text: ''
+		},
+		thumbnail:
+		{
+			url: ['https://http.cat/200']
+		},
+		title: '',
+		url: '',
+		fields: [
+			{
+				"name": "Chien",
+				"value": "Hi! :wave:",
+				"inline": true
+			},
+			{
+				"name": "Chat",
+				"value": ":smile:",
+				"inline": true
+			}
+		]
+	}
+}
