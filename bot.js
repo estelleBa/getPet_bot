@@ -44,8 +44,8 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 					validAdopt = true;
 					askAdopt = false;
 					let catStatus = randomStatus();
-					setEmbed();
-					botSend(bot, channelID, 'https://http.cat/'+catStatus);
+					setEmbed({url:'https://http.cat/'+catStatus});
+					botSend(bot, channelID, dialogFlow("showAdopt : chat"));
 				}
 				else if(message=="chien"){
 					// get dog
@@ -55,13 +55,13 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 					{ headers: { 'Content-Type' : 'application/json' },
 					}).then(function(res){
 						try {
-							setEmbed();
-							botSend(bot, channelID, res.data.message);
+							setEmbed({url:res.data.message});
+							botSend(bot, channelID, dialogFlow("showAdopt : chien"));
 						}
 						catch(error){ botSend(bot, channelID, error); }
 					});
 				}
-				else botSend(bot, channelID, dialogFlow("askAdopt : undefined"));
+				else botSend(bot, channelID, dialogFlow("error : animal undefined"));
 			}
 			// validAdopt == true
 			else if(validAdopt) {
@@ -93,9 +93,10 @@ function dialogFlow(message){
 		try {
 			let data = res.data.result.fulfillment.speech.split(':');
 			if(data[0]=="askAdopt"){
+				setEmbed();
 				askAdopt = true;
 			}
-			else {
+			else if(data[0]=="showAdopt") {
 
 			}
 			return data[1];
