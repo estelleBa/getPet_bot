@@ -65,14 +65,16 @@ bot.on('message', function (user, userID, channelID, message, evt) {
         }
         else {
           if(message=="oui"){
+            askAdopt = false;
   					validAdopt = false;
   					dialogFlow(bot, channelID, "validAdopt = true");
   				}
   				else if(message=="non"){
+            askAdopt = false;
   					validAdopt = false;
   					dialogFlow(bot, channelID, "validAdopt = false");
   				}
-  				else dialogFlow(bot, channelID, "validAdopt = undefined");
+  				else dialogFlow(bot, channelID, "error = validation undefined");
         }
 			}
 			else dialogFlow(bot, channelID, message);
@@ -106,6 +108,14 @@ function dialogFlow(bot, channelID, message, url = null){
         embed = true;
         validAdopt = true;
         params = ({ url:url, fields: [{ name: ":white_check_mark:", value: "oui", inline: true }, { name: ":x:", value: "non", inline: true }] });
+			}
+      else if(data[0]=="validAdopt") {
+        if(data[1]==true){
+          data[1] = 'Felicitations !! Occupe toi bien de ton nouvel amis :nerd:'
+        }
+        else if(data[1]==false) {
+          data[1] = 'Dommage ... Continu a chercher :cold_sweat:'
+        }
 			}
       if(embed){
         if(params.url){
