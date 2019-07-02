@@ -20,67 +20,67 @@ bot.on('ready', function (evt) {
 let talk = "off";
 let askAdopt = false;
 let validAdopt = false;
-let botSay = '';
-let embed = null;
+let embed = false;
+
+let user = 0;
+let animal = null;
+let params;
 
 bot.on('message', function (user, userID, channelID, message, evt) {
 	if(user !== 'getPet'){
 		// turn on bot
 		if(message=='pet talk' && talk=="off"){
 			talk = "on";
-			botSend(bot, channelID, dialogFlow('start : ' + user));
+			dialogFlow(bot, channelID, 'start = ' + user);
 		}
 		// turn off bot
 		else if(message=='pet talk' && talk=="on"){
 			talk = "off";
-			botSend(bot, channelID, dialogFlow('exit : ' + user));
+			dialogFlow(bot, channelID, 'exit = ' + user);
 		}
 		// bot on
 		else if(talk=="on"){
 			// askAdopt == true
 			if(askAdopt) {
-				if(message=="chat"){
-					// get cat
-					validAdopt = true;
-					askAdopt = false;
-					let catStatus = randomStatus();
-					setEmbed({url:'https://http.cat/'+catStatus});
-					botSend(bot, channelID, dialogFlow("showAdopt : chat"));
-				}
-				else if(message=="chien"){
-					// get dog
-					validAdopt = true;
-					askAdopt = false;
-					axios.get('https://dog.ceo/api/breeds/image/random',
-					{ headers: { 'Content-Type' : 'application/json' },
-					}).then(function(res){
-						try {
-							setEmbed({url:res.data.message});
-							botSend(bot, channelID, dialogFlow("showAdopt : chien"));
-						}
-						catch(error){ botSend(bot, channelID, error); }
-					});
-				}
-				else botSend(bot, channelID, dialogFlow("error : animal undefined"));
+        if(!validAdopt){
+  				if(message=="chat"){
+  					// get cat
+  					validAdopt = true;
+  					let catStatus = randomStatus();
+  					dialogFlow(bot, channelID, "showAdopt = chat", 'https://http.cat/'+catStatus);
+  				}
+  				else if(message=="chien"){
+  					// get dog
+  					validAdopt = true;
+  					axios.get('https://dog.ceo/api/breeds/image/random',
+  					{ headers: { 'Content-Type' : 'application/json' },
+  					}).then(function(res){
+  						try {
+  							dialogFlow(bot, channelID, "showAdopt = chien", res.data.message);
+  						}
+  						catch(error){ console.log(error) }
+  					});
+  				}
+  				else dialogFlow(bot, channelID, "error = animal undefined");
+        }
+        else {
+          if(message=="oui"){
+  					validAdopt = false;
+  					dialogFlow(bot, channelID, "validAdopt = true");
+  				}
+  				else if(message=="non"){
+  					validAdopt = false;
+  					dialogFlow(bot, channelID, "validAdopt = false");
+  				}
+  				else dialogFlow(bot, channelID, "validAdopt = undefined");
+        }
 			}
-			// validAdopt == true
-			else if(validAdopt) {
-				if(message=="oui"){
-					validAdopt = false;
-					botSend(bot, channelID, dialogFlow("validAdopt : true"));
-				}
-				else if(message=="non"){
-					validAdopt = false;
-					botSend(bot, channelID, dialogFlow("validAdopt : false"));
-				}
-				else botSend(bot, channelID, dialogFlow("validAdopt : undefined"));
-			}
-			else botSend(bot, channelID, dialogFlow(message));
+			else dialogFlow(bot, channelID, message);
 		}
 	}
 });
 
-function dialogFlow(message){
+function dialogFlow(bot, channelID, message, url = null){
 	axios.post('https://api.dialogflow.com/v1/query?v=20150910',
 	{  contexts: [],
 		 lang: "fr",
@@ -91,28 +91,95 @@ function dialogFlow(message){
 	{ headers: { 'Content-Type' : 'application/json', Authorization: "Bearer " + config.Dialogflow },
 	}).then(function(res){
 		try {
-			let data = res.data.result.fulfillment.speech.split(':');
-			if(data[0]=="askAdopt"){
-				setEmbed();
-				askAdopt = true;
+			let data = res.data.result.fulfillment.speech.split('=');
+      if(data[0]=="start"){
+        if(user==1) return;
+        else user = 1;
+      }
+			else if(data[0]=="askAdopt"){
+        if(askAdopt) return;
+				embed = true;
+        askAdopt = true;
+        params = ({ url:null, fields: [{ name: ":dog:", value: "chien", inline: true }, { name: ":cat:", value: "chat", inline: true }] });
 			}
 			else if(data[0]=="showAdopt") {
-
+        embed = true;
+        validAdopt = true;
+        params = ({ url:url, fields: [{ name: ":white_check_mark:", value: "oui", inline: true }, { name: ":x:", value: "non", inline: true }] });
 			}
-			return data[1];
+      if(embed){
+        if(params.url){
+          bot.sendMessage({
+            to: channelID,
+            message: data[1],
+            embed: {
+              color: 6826080,
+              footer: {
+                text: ''
+              },
+              thumbnail:
+              {
+                url: params.url
+              },
+              title: '',
+              url: '',
+              fields: [
+                {
+                  "name": params.fields[0].name,
+                  "value": params.fields[0].value,
+                  "inline": params.fields[0].inline
+                },
+                {
+                  "name": params.fields[1].name,
+                  "value": params.fields[1].value,
+                  "inline": params.fields[1].inline
+                }
+              ]
+            },
+            typing: false
+          });
+        }
+        else {
+          bot.sendMessage({
+            to: channelID,
+            message: data[1],
+            embed: {
+              color: 6826080,
+              footer: {
+                text: ''
+              },
+              title: '',
+              url: '',
+              fields: [
+                {
+                  "name": params.fields[0].name,
+                  "value": params.fields[0].value,
+                  "inline": params.fields[0].inline
+                },
+                {
+                  "name": params.fields[1].name,
+                  "value": params.fields[1].value,
+                  "inline": params.fields[1].inline
+                }
+              ]
+            },
+            typing: false
+          });
+        }
+        embed = false;
+        return;
+      }
+      else {
+        bot.sendMessage({
+          to: channelID,
+          message: data[1],
+          typing: true
+        });
+        return;
+      }
 		}
-		catch(error){ return error }
+		catch(error){ console.log(error) }
 	});
-}
-
-function botSend(bot, channelID, message){
-	bot.sendMessage({
-		to: channelID,
-		message: message,
-		embed: { embed },
-		typing: true
-	});
-	return;
 }
 
 function randomStatus(){
@@ -129,31 +196,4 @@ function randomStatus(){
 	}
 	catStatus = shuffle(catStatus);
 	return catStatus[0];
-}
-
-function setEmbed(){
-	embed = {
-		color: 6826080,
-		footer: {
-			text: ''
-		},
-		thumbnail:
-		{
-			url: ['https://http.cat/200']
-		},
-		title: '',
-		url: '',
-		fields: [
-			{
-				"name": "Chien",
-				"value": "Hi! :wave:",
-				"inline": true
-			},
-			{
-				"name": "Chat",
-				"value": ":smile:",
-				"inline": true
-			}
-		]
-	}
 }
