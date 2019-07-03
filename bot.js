@@ -20,11 +20,11 @@ bot.on('ready', function (evt) {
 let talk = "off";
 let askAdopt = false;
 let validAdopt = false;
+let chooseName = false;
 let embed = false;
 
 let botSay = '';
 let user = 0;
-let animal = null;
 let params;
 
 bot.on('message', function (user, userID, channelID, message, evt) {
@@ -37,6 +37,9 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 		// turn off bot
 		else if(message=='pet talk' && talk=="on"){
 			talk = "off";
+      askAdopt = false;
+      validAdopt = false;
+      chooseName = false;
 			dialogFlow(bot, channelID, 'exit = ' + user);
 		}
 		// bot on
@@ -67,17 +70,26 @@ bot.on('message', function (user, userID, channelID, message, evt) {
   				else dialogFlow(bot, channelID, "error = animal undefined");
         }
         else {
-          if(message=="oui"){
+          if(chooseName){
             askAdopt = false;
-  					validAdopt = false;
-  					dialogFlow(bot, channelID, "validAdopt = true");
-  				}
-  				else if(message=="non"){
-            askAdopt = false;
-  					validAdopt = false;
-  					dialogFlow(bot, channelID, "validAdopt = false");
-  				}
-  				else dialogFlow(bot, channelID, "error = validation undefined");
+            validAdopt = false;
+            chooseName = false;
+            let splitName = message.split(' ');
+            let name = splitName[splitName.length - 1];
+            dialogFlow(bot, channelID, "petName = "+name);
+          }
+          else {
+            let splitText = message.split(' ');
+            if(splitText.indexOf('oui', 0) !== -1){
+    					dialogFlow(bot, channelID, "validAdopt = true");
+    				}
+    				else if(splitText.indexOf('non', 0) !== -1){
+              askAdopt = false;
+    					validAdopt = false;
+    					dialogFlow(bot, channelID, "validAdopt = false");
+    				}
+    				else dialogFlow(bot, channelID, "error = validation undefined");
+          }
         }
 			}
 			else dialogFlow(bot, channelID, message);
@@ -123,7 +135,8 @@ function dialogFlow(bot, channelID, message, url = null){
 			}
       else if(data[0]=="validAdopt") {
         if(data[1]=='true'){
-          botSay = 'Felicitations !! Occupe toi bien de ton nouvel amis :nerd:';
+          chooseName = true;
+          botSay = 'Felicitations !! Comment tu vas l\'appeler ? :';
         }
         else if(data[1]=='false') {
           botSay = 'Dommage ... Continu a chercher :cold_sweat:';
