@@ -22,6 +22,7 @@ let askAdopt = false;
 let validAdopt = false;
 let embed = false;
 
+let botSay = '';
 let user = 0;
 let animal = null;
 let params;
@@ -43,13 +44,15 @@ bot.on('message', function (user, userID, channelID, message, evt) {
 			// askAdopt == true
 			if(askAdopt) {
         if(!validAdopt){
-  				if(message=="chat"){
+          // split indexof chat !== -1
+          let splitText = message.split(' ');
+  				if(splitText.indexOf('chat', 0) !== -1){
   					// get cat
   					validAdopt = true;
   					let catStatus = randomStatus();
   					dialogFlow(bot, channelID, "showAdopt = chat", 'https://http.cat/'+catStatus);
   				}
-  				else if(message=="chien"){
+  				else if(splitText.indexOf('chien', 0) !== -1){
   					// get dog
   					validAdopt = true;
   					axios.get('https://dog.ceo/api/breeds/image/random',
@@ -97,31 +100,41 @@ function dialogFlow(bot, channelID, message, url = null){
       if(data[0]=="start"){
         if(user==1) return;
         else user = 1;
+        botSay = data[1];
+      }
+      else if(data[0]=="exit"){
+        if(user==1){
+          user = 0;
+          botSay = data[1];
+        }
       }
 			else if(data[0]=="askAdopt"){
         if(askAdopt) return;
+        botSay = data[1];
 				embed = true;
         askAdopt = true;
         params = ({ url:null, fields: [{ name: ":dog:", value: "chien", inline: true }, { name: ":cat:", value: "chat", inline: true }] });
 			}
 			else if(data[0]=="showAdopt") {
+        botSay = data[1];
         embed = true;
         validAdopt = true;
         params = ({ url:url, fields: [{ name: ":white_check_mark:", value: "oui", inline: true }, { name: ":x:", value: "non", inline: true }] });
 			}
       else if(data[0]=="validAdopt") {
-        if(data[1]==true){
-          data[1] = 'Felicitations !! Occupe toi bien de ton nouvel amis :nerd:'
+        if(data[1]=='true'){
+          botSay = 'Felicitations !! Occupe toi bien de ton nouvel amis :nerd:';
         }
-        else if(data[1]==false) {
-          data[1] = 'Dommage ... Continu a chercher :cold_sweat:'
+        else if(data[1]=='false') {
+          botSay = 'Dommage ... Continu a chercher :cold_sweat:';
         }
 			}
+      else botSay = data[0];
       if(embed){
         if(params.url){
           bot.sendMessage({
             to: channelID,
-            message: data[1],
+            message: botSay,
             embed: {
               color: 6826080,
               footer: {
@@ -152,7 +165,7 @@ function dialogFlow(bot, channelID, message, url = null){
         else {
           bot.sendMessage({
             to: channelID,
-            message: data[1],
+            message: botSay,
             embed: {
               color: 6826080,
               footer: {
@@ -182,7 +195,7 @@ function dialogFlow(bot, channelID, message, url = null){
       else {
         bot.sendMessage({
           to: channelID,
-          message: data[1],
+          message: botSay,
           typing: true
         });
         return;
